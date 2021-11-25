@@ -1,0 +1,89 @@
+# Importerer nødvendige moduler
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def getInputs():
+    defaultLoan = 0
+    defaultTerms = 1
+    defaultCapital = 0
+    defaultKids = 0
+    defaultCar = 0                       # 0 nei eller  1 ja
+    defaultInterest = 1                      # i %
+
+    
+def kalkulator(inputArray):
+    termArray=np.array([])                  #år eller måned
+    amountInterestArray = np.array([])      # renter i kroner
+    amountDeductionArray = np.array([])     # avdrag i kroner
+    amountTermArray = np.array([])          # terminbeløp i kroner
+        
+    # Tar inn brukerinput og leser inn i variabler
+    loan, terms, capital, kids, car, interest = hent_input()
+  
+    # Bestemmer interesse basert på om brukeren har barn og/eller bil
+    if kids >= 1 and car == True:      
+        interest *= 1.05 
+        return interest
+                                    
+    if kids > 0 or car == True:    
+        interest *= 1.03
+        return interest
+        
+    # Regner ut verdiene for lånet
+    interest = 1 + interest/100     # om renta er 10% så blir 'interest' = 1.1
+    total = int(round((loan - capital) * (interest ** terms)))
+    denominator = 0                 # nevneren i brøken på side 376
+    for i in range(terms):
+        denominator = denominator + interest ** i
+    termAmount = int(round(total / denominator))
+    
+    # Legger til termin-år, terminbeløp, avdrag, og rente for alle terminene i sine respektive lister
+    for i in range(terms):
+        termArray = np.append(termArray, i + 1)
+        amountTermArray = np.append(amountTermArray, termAmount)
+        amountDeductionArray = np.append(amountDeductionArray, int(round(termAmount/(interest ** (i + 1)))))
+        amountInterestArray = np.append(amountInterestArray, int(round(termAmount - termAmount/(interest ** (i + 1)))))
+
+    # Printer ut totalbeløp og terminbeløp, samt listene over dataene i lånet
+    print_beregninger(interest, total, termAmount, termArray, amountTermArray, amountDeductionArray, amountInterestArray)
+   
+    # Plotter lånet
+    plott_laan(termArray, amountDeductionArray, amountInterestArray)
+
+
+def hent_input():
+    print("Press 'enter' for å velge de forvalgte verdiene som står skrevet imellom parantesene, eller skriv inn egne verdier.")
+
+    loan=int(input("Ønsket lånebeløp (" + str(defaultLoan) + "): ") or str(defaultLoan))
+    terms=int(input("Hvor mange år skal lånet nedbetales på? (" + str(defaultTerms) + "): ") or str(defaultTerms))
+    capital=int(input("Hvor mye har du i egenkapital? (" + str(defaultCapital) + ") ") or str(defaultCapital))
+    kids=int(input("Hvor mange barn har du? (" + str(defaultKids) + "): ") or str(defaultKids)) 
+    car=(input("Har du bil? Skriv 0 hvis ikke, eller 1 hvis du har (" + str(defaultCar) + "): ") or str(defaultCar))
+    interest=float(input("Rente i prosent (" + str(defaultInterest) + "): ") or str(defaultInterest))
+
+    return loan, terms, capital, kids, car, interest
+
+
+def print_beregninger(interest, total, termAmount, termArray, amountTermArray, amountDeductionArray, amountInterestArray):
+    print("\nMed renter " + str(interest) + " blir totalen: " + str(total))
+    print("Terminbeløp: " + str(termAmount))
+    print("År: " + str(termArray))
+    print("Terminbeløp: " + str(amountTermArray))
+    print("Avdrag: " + str(amountDeductionArray[::-1]))
+    print("Renter og gebyrer: " + str(amountInterestArray[::-1]))
+
+
+def plott_laan(termArray, amountDeductionArray, amountInterestArray):
+    plt.bar(termArray, amountDeductionArray[::-1], color='darkblue')
+    plt.bar(termArray, amountInterestArray[::-1], bottom=amountDeductionArray[::-1], color='royalblue')
+    plt.xlabel('ÅR')
+    plt.ylabel('TERMINBELØP')
+    plt.legend(['Avdrag', 'Renter'], loc='lower right')
+    plt.title('Annuitetslån')
+    plt.rcParams["figure.figsize"] = [7, 5]
+    plt.xticks(termArray)
+    plt.show()
+
+inputArray=getInputs()
+kalkulator(inputArray)
